@@ -3,6 +3,8 @@ package main
 import (
 	"bufio"
 	"bytes"
+	_ "embed"
+	"errors"
 	"fmt"
 	"log"
 	"os"
@@ -10,9 +12,15 @@ import (
 	"text/template"
 )
 
-const data = `fizzbuzz-codegen`
+// TODO(wperron) parameterize domain and GH user
 const hostPath = "go.wperron.io/%s"
 const sourcePath = "https://github.com/wperron/%s"
+
+//go:embed templates/index.html.tpl
+var index string
+
+//go:embed templates/package.html.tpl
+var pkg string
 
 type Package struct {
 	Title  string
@@ -21,41 +29,22 @@ type Package struct {
 }
 
 func main() {
-	if err := os.Mkdir("./public", 0o600); err != nil {
-		log.Fatalf("failed to create public dir: %s", err)
-	}
-
-	bs, err := os.ReadFile("./templates/index.html.tpl")
-	if err != nil {
-		log.Fatalf("failed to read index tpl file: %s", err)
-	}
-
-	indexTpl, err := template.New("index").Parse(string(bs))
-	if err != nil {
-		log.Fatalf("failed to parse template: %s", err)
-	}
-
-	bs, err = os.ReadFile("./templates/package.html.tpl")
-	if err != nil {
-		log.Fatalf("failed to read index tpl file: %s", err)
-	}
-
-	pkgTpl, err := template.New("index").Parse(string(bs))
-	if err != nil {
-		log.Fatalf("failed to parse template: %s", err)
-	}
-
-	scan := bufio.NewScanner(strings.NewReader(data))
-	packages := make([]Package, 0)
-	for scan.Scan() {
-		l := scan.Text()
-		p := Package{
-			Title:  l,
-			Href:   fmt.Sprintf(hostPath, l),
-			Source: fmt.Sprintf(sourcePath, l),
+	// TODO(wperron) parameterize output directory
+	if err := os.Mkdir("./public", 0o700); err != nil {
+		if !errors.Is(err, os.ErrExist) {
+			log.Fatalf("failed to create public dir: %s", err)
 		}
-		packages = append(packages, p)
 	}
+
+	indexTpl := must(template.New("index").Parse(index))
+	pkgTpl := must(template.New("index").Parse(pkg))
+
+	f := must(os.Open("packages.csv"))
+	scan := bufio.NewScanner(f)
+	// Consume title line of CSV
+	_ = scan.Scan()
+
+	packages := ReadPackages(scan)
 
 	var buf bytes.Buffer
 	if err := indexTpl.Execute(&buf, packages); err != nil {
@@ -76,4 +65,26 @@ func main() {
 			log.Fatalf("failed to write package output file fot %s: %s", p.Title, err)
 		}
 	}
+}
+
+func ReadPackages(s *bufio.Scanner) []Package {
+	packages := make([]Package, 0)
+	for s.Scan() {
+		l := s.Text()
+		parts := strings.Split(l, ",")
+		p := Package{
+			Title:  parts[1],
+			Href:   fmt.Sprintf(hostPath, parts[1]),
+			Source: fmt.Sprintf(sourcePath, parts[0]),
+		}
+		packages = append(packages, p)
+	}
+	return packages
+}
+
+func must[T any](v T, err error) T {
+	if err != nil {
+		log.Fatalln(err)
+	}
+	return v
 }

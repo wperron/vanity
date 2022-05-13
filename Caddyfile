@@ -1,7 +1,7 @@
-http://localhost, http://go.wperron.io {
-        bind 0.0.0.0
-        root * /usr/share/caddy
-        try_files {path} /{path}.html
-        file_server
-        metrics /metrics
+http://localhost, http://go.wperron.io, http://vanity.fly.dev {
+  bind 0.0.0.0
+  root * /usr/share/caddy
+  try_files {path} /{path}.html
+  file_server
+  metrics /metrics
 }
