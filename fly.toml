@@ -13,8 +13,8 @@ processes = []
   auto_rollback = true
 
 [metrics]
-  port = 80
-  path = "/metrics"
+port = 9091
+path = "/metrics"
 
 [[services]]
   http_checks = []
