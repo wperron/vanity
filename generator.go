@@ -14,7 +14,7 @@ import (
 
 // TODO(wperron) parameterize domain and GH user
 const hostPath = "go.wperron.io/%s"
-const sourcePath = "https://github.com/wperron/%s"
+const sourcePath = "https://%s/wperron/%s"
 
 //go:embed templates/index.html.tpl
 var index string
@@ -67,6 +67,8 @@ func main() {
 	}
 }
 
+// Read Packages assumes the following format:
+// NAME,HOST,SLUG
 func ReadPackages(s *bufio.Scanner) []Package {
 	packages := make([]Package, 0)
 	for s.Scan() {
@@ -75,7 +77,7 @@ func ReadPackages(s *bufio.Scanner) []Package {
 		p := Package{
 			Title:  parts[1],
 			Href:   fmt.Sprintf(hostPath, parts[1]),
-			Source: fmt.Sprintf(sourcePath, parts[0]),
+			Source: fmt.Sprintf(sourcePath, parts[2], parts[0]),
 		}
 		packages = append(packages, p)
 	}

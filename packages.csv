@@ -1,4 +1,5 @@
-REPO,SLUG
-fizzbuzz-codegen,fizzbuzz-codegen
-slice-tricks,slice
-vanity,vanity
+REPO,SLUG,HOST
+fizzbuzz-codegen,fizzbuzz-codegen,github.com
+slice-tricks,slice,github.com
+vanity,vanity,github.com
+sqliteexporter,sqliteexporter,git.doots.space
